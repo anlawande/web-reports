@@ -12,10 +12,18 @@ function init(resolve, reject) {
 function log(str) {
     
     var d = new Date();
-    str = d.toTimeString() + ": " + str + "\r\n";
+    str = d.toTimeString() + "\tINFO : " + str + "\r\n";
+    
+    fs.appendFile(APP_LOG, str);
+}
+
+function error(str) {
+    var d = new Date();
+    str = d.toTimeString() + "\tERROR : " + str + "\r\n";
     
     fs.appendFile(APP_LOG, str);
 }
 
 exports.init = init;
 exports.log = log;
+exports.error = error;

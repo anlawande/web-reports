@@ -1,45 +1,50 @@
 var Promise = require("promise");
+var logger = require("./logger.js");
+var mongojs = require('mongojs');
 
 //TODO Move to config
 var dbName = "web_reports";
+var db;
 
-var connection_string = '127.0.0.1:27017/' + dbName;
-// if OPENSHIFT env variables are present, use the available connection info:
-if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
-    connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
-        process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
-        process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
-        process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
-        process.env.OPENSHIFT_APP_NAME;
+function init(resolve, reject) {
+    var connection_string = '127.0.0.1:27017/' + dbName;
+    // if OPENSHIFT env variables are present, use the available connection info:
+    if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
+        connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
+            process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
+            process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
+            process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
+            process.env.OPENSHIFT_APP_NAME;
+    }
+
+    db = mongojs(connection_string, ['catalog']);
+    logger.log("Database initliazed");
+    
+    db.on("error", function(err) {
+        console.log(err);
+        logger.error("DBerror: " + err);
+    });
+    
+    resolve();
 }
-
-var mongojs = require('mongojs');
-var db = mongojs(connection_string, ['catalog']);
-//db.on("error", function() {
-//    
-//});
 
 function errorObj() {
     this.message = "";
     this.isError = true;
 }
 
-function handleFindResults(results, callback){
+function handleFindResults(resolve, reject){
 
-    return function(err, doc){
+    return function(err, docs){
         if(err) {
             var error = new errorObj();
             error.message = err.message;
-            callback(error);
+            logger.error(err);
+            reject(error);
             return;
         }
 
-        //TODO WTF is with the extra null
-        if(doc !== null) {
-            results.push(doc);
-        }
-        else
-            callback(results);
+        resolve(docs);
     }
 }
 
@@ -77,15 +82,8 @@ function getAllSites() {
     var results = [];
 
     var promise = new Promise(function(resolve, reject) {
-        db.catalog.find({}, function(err, docs){
-            if(!err)
-                resolve(docs);
-            else {
-                console.log(err);
-            }
-        })
+        db.catalog.find({}, handleFindResults(resolve, reject));
     });
-    
     return promise;
 }
 
@@ -119,4 +117,5 @@ var Catalog = {
     'getAllSites' : getAllSites,
 };
 
+exports.init = init;
 exports.Catalog = Catalog;
