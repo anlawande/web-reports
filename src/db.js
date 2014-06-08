@@ -1,9 +1,7 @@
-// var EventEmitter = require("events").EventEmitter;
-
-// default to a 'localhost' configuration:
+var Promise = require("promise");
 
 //TODO Move to config
-var dbName = "webReports";
+var dbName = "web_reports";
 
 var connection_string = '127.0.0.1:27017/' + dbName;
 // if OPENSHIFT env variables are present, use the available connection info:
@@ -16,13 +14,10 @@ if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
 }
 
 var mongojs = require('mongojs');
-//var db = mongojs(connection_string, ['video']);
+var db = mongojs(connection_string, ['catalog']);
 //db.on("error", function() {
 //    
 //});
-//var books = db.collection('books');
-// similar syntax as the Mongo command-line interface
-// log each of the first ten docs in the collection
 
 function errorObj() {
     this.message = "";
@@ -64,7 +59,7 @@ function handleDistinctResults(results, callback){
 }
 
 function handleInsert(callback) {
-    
+
     return function(err) {
         if(err) {
             var error = new errorObj();
@@ -78,45 +73,50 @@ function handleInsert(callback) {
     }
 }
 
-function getVideo(short, callback) {
+function getAllSites() {
     var results = [];
+
+    var promise = new Promise(function(resolve, reject) {
+        db.catalog.find({}, function(err, docs){
+            if(!err)
+                resolve(docs);
+            else {
+                console.log(err);
+            }
+        })
+    });
     
-    db.video.find({"short" : short}, {_id : 0})
-            .forEach(handleFindResults(results, callback));
+    return promise;
 }
 
 function getAllVideos(callback) {
     var results = [];
-    
+
     db.video.find()
-            .forEach(handleFindResults(results, callback));
+    .forEach(handleFindResults(results, callback));
 }
 
 function getAllCategories(callback){
     var results = [];
-    
+
     db.video.distinct('category', handleDistinctResults(results, callback));
 }
 
 function getCategoryVideos(category, callback) {
     var results = [];
-    
+
     db.video.find({"category" : category})
-            .limit(10)
-            .forEach(handleFindResults(results, callback));
+    .limit(10)
+    .forEach(handleFindResults(results, callback));
 }
 
 function insertVideo(video, callback) {
-    
+
     db.video.insert(video, handleInsert(callback));
 }
 
-var Video = {
-    'getVideo' : getVideo,
-    'getAllCategories' : getAllCategories,
-    'getCategoryVideos' : getCategoryVideos,
-    'insertVideo' : insertVideo,
-    'getAllVideos' : getAllVideos
+var Catalog = {
+    'getAllSites' : getAllSites,
 };
 
-exports.Video = Video;
+exports.Catalog = Catalog;

@@ -8,6 +8,7 @@ eventManager.onInit([logger]).then(appInit);
 
 function appInit() {
     eventManager.onInit([requester]).then(function(){
+        console.log("Application initialized");
         logger.log("Application initialized");
     });
 }

@@ -1,4 +1,5 @@
 var request = require('request');
+var Promise = require("promise");
 var eventManager = require("./eventManager.js");
 var logger = require("./logger.js");
 
@@ -20,19 +21,24 @@ function init(resolve, reject) {
             console.log("Fiddler not running, using system proxy");
             logger.log("Fiddler not running, using system proxy");
         }
-        
+
         resolve();
     });
 }
 
 function makeRequest(url, opts) {
-    request({
-        url: 'http://www.google.com',
-    }, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            console.log("Done");
-        }
+
+    var promise = new Promise(function(resolve, reject){
+        request({
+            "url": url,
+        }, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(response);
+            }
+        });
     });
+    
+    return promise;
 }
 
 exports.init = init;
