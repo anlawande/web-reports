@@ -32,8 +32,11 @@ function makeRequest(url, opts) {
         request({
             "url": url,
         }, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
+            if (!error) {
                 resolve(response);
+            }
+            else {
+                reject(error);
             }
         });
     });
@@ -42,3 +45,4 @@ function makeRequest(url, opts) {
 }
 
 exports.init = init;
+exports.makeRequest = makeRequest;

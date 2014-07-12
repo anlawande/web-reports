@@ -1,4 +1,5 @@
 var fs = require("fs");
+var stringify = require("json-stringify-safe");
 
 var APP_LOG = "./app.log";
 var DUMP_LOG = "./dump.log";
@@ -24,6 +25,11 @@ function error(str) {
     fs.appendFile(APP_LOG, str);
 }
 
+function dumpObj(obj) {
+    fs.writeFile(DUMP_LOG, stringify(obj));
+}
+
 exports.init = init;
 exports.log = log;
 exports.error = error;
+exports.dumpObj = dumpObj;

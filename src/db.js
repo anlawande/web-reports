@@ -18,7 +18,8 @@ function init(resolve, reject) {
     }
 
     db = mongojs(connection_string, ['catalog']);
-    logger.log("Database initliazed");
+    console.log("Database initialized");
+    logger.log("Database initialized");
     
     db.on("error", function(err) {
         console.log(err);
@@ -82,7 +83,7 @@ function getAllSites() {
     var results = [];
 
     var promise = new Promise(function(resolve, reject) {
-        db.catalog.find({}, handleFindResults(resolve, reject));
+        db.catalog.find({}, {_id : 0}, handleFindResults(resolve, reject));
     });
     return promise;
 }
