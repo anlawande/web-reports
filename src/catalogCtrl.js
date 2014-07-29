@@ -3,6 +3,7 @@ var Promise = require("promise");
 var PCQueue = require("promise-pc").PCQueue;
 var requester = require("./requester.js");
 var logger = require("./logger.js");
+var helper = require("./catalogHelper.js");
 var cheerio = require("cheerio");
 var fs = require("fs");
 var eventManager = require("./eventManager.js");
@@ -44,16 +45,17 @@ function refreshCatalog() {
 
     return new Promise(function(resolve, reject) {
         for(var i = 0; i < sites.length; i++) {
+            var site = sites[i];
             var site_url = sites[i].url;
             var promise = RequestQueue.produce(function() {
                 return requester.makeRequest(site_url);
             });
 
             promise.done(function(response) {
-                //logger.dumpObj(response);
+                logger.dumpObj(response);
                 logger.log("Catalog item - " + site_url +" : " + response.statusCode);
 
-                var $ = cheerio.load(response.body);
+                processResponse(response, site);
                 
                 if(++num_sites_loaded === num_sites_total)
                     resolve();
@@ -68,9 +70,27 @@ function refreshCatalog() {
     });
 }
 
+function processResponse(response, requestSite) {
+    
+    var contentType = response.headers["content-type"];
+    var ext = helper.getFileExtension(contentType);
+    var filename = "/" + requestSite.name + "/" + requestSite.name + ext;
+    
+    helper.writeFile(filename, JSON.stringify(response.body));
+}
+
+function runJsInCatalog() {
+    var $ = cheerio.load(response.body);
+    
+    var vm = require("vm");
+    
+    var result = vm.runInNewContext("$('script')", {$ : $});
+    console.log(result.length);
+}
+
 function cleanCatalog() {
 
-    throw "Not Implented";
+    throw "Not Implemented";
 }
 
 exports.init = init;
