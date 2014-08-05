@@ -5,6 +5,7 @@ var requester = require("./requester.js");
 var logger = require("./logger.js");
 var helper = require("./catalogHelper.js");
 var cheerio = require("cheerio");
+var async = require("async");
 var fs = require("fs");
 var eventManager = require("./eventManager.js");
 var sites, num_sites_total, num_sites_loaded = 0;
@@ -55,10 +56,10 @@ function refreshCatalog() {
                 logger.dumpObj(response);
                 logger.log("Catalog item - " + site_url +" : " + response.statusCode);
 
-                processResponse(response, site);
-                
-                if(++num_sites_loaded === num_sites_total)
-                    resolve();
+                processResponse(response, site).then(function() {
+                    if(++num_sites_loaded === num_sites_total)
+                        resolve();
+                });
             }, function(err) {
                 console.log(err);
                 logger.error(err);
@@ -76,7 +77,20 @@ function processResponse(response, requestSite) {
     var ext = helper.getFileExtension(contentType);
     var filename = "/" + requestSite.name + "/" + requestSite.name + ext;
     
-    helper.writeFile(filename, JSON.stringify(response.body));
+    var promise = new Promise(function(resolve, reject) {
+        async.parallel([function() {
+            helper.writeFile(filename, JSON.stringify(response.body), resolve);
+        }, function() {
+            var final = helper.updateSiteDocs
+            db.Catalog.updateSiteDocs(requestSite.id, {html : ["xyz"], css : ["css"]}).then(function() {
+                logger.log("Updated entry - " + requestSite.name);
+            });
+        }], function() {
+            resolve();
+        });
+    });
+    
+    return promise;
 }
 
 function runJsInCatalog() {

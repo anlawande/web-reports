@@ -79,12 +79,30 @@ function handleInsert(callback) {
     }
 }
 
+function handleUpdateResults(resolve, reject) {
+    
+    return function(err) {
+        if(err)
+            reject(err);
+        else
+            resolve();
+    }
+}
+
 function getAllSites() {
-    var results = [];
 
     var promise = new Promise(function(resolve, reject) {
         db.catalog.find({}, {_id : 0}, handleFindResults(resolve, reject));
     });
+    return promise;
+}
+
+function updateSiteDocs(siteId, docsObj) {
+    
+    var promise = new Promise(function(resolve, reject) {
+        db.catalog.update({"id" : siteId}, {$set : {"documents" : docsObj}}, handleUpdateResults(resolve, reject));
+    });
+    
     return promise;
 }
 
@@ -116,6 +134,7 @@ function insertVideo(video, callback) {
 
 var Catalog = {
     'getAllSites' : getAllSites,
+    'updateSiteDocs' : updateSiteDocs
 };
 
 exports.init = init;

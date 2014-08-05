@@ -38,5 +38,9 @@ function getFileExtension(contentType) {
     return ext;
 }
 
+function updateDocs() {
+    
+}
+
 exports.writeFile = writeFile;
 exports.getFileExtension = getFileExtension;
